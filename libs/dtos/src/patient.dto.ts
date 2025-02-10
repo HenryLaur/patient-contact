@@ -113,3 +113,28 @@ export class UpdatePatientDto implements Partial<DetailedPatientDto> {
   @Exclude()
   updated?: never;
 }
+
+/**
+ * DTO for next and previous patient ids and current index and total number of patients.
+ */
+export class PatientIndexDto {
+  @ApiProperty({
+    description: 'id of the next patient',
+  })
+  nextId: string | null;
+
+  @ApiProperty({
+    description: 'id of the previous patient',
+  })
+  prevId: string | null;
+
+  @ApiProperty({
+    description: 'index of the current patient position',
+  })
+  currentIndex: number;
+
+  @ApiProperty({
+    description: 'number of patients',
+  })
+  total: number;
+}

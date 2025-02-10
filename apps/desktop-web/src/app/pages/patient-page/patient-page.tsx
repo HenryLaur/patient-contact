@@ -22,9 +22,10 @@ export function PatientPage(props: PatientPageProps) {
   // State for loading detailed patient
   const [loadingPatient, setLoadingPatient] = useState(false);
 
-  // TODO - implement
-  const currentPatientIndex = 0;
-  const totalPatients = 0;
+  const [totalPatients, setTotalPatients] = useState(0);
+  const [currentPatientIndex, setCurrentPatientIndex] = useState(0);
+  const [prevPatientId, setPrevPatientId] = useState<string | null>(null);
+  const [nextPatientId, setNextPatientId] = useState<string | null>(null);
 
   /**
    * Fetch patient details when ID changes.
@@ -41,7 +42,21 @@ export function PatientPage(props: PatientPageProps) {
       .then((response) => {
         if (response?.data) {
           setPatient(response.data);
+          return axios.get(
+            `http://localhost:3333/patients/${patientId}/index`,
+            { params: { contacted: response?.data?.contacted } }
+          );
         }
+      })
+      .then((response) => {
+        if (response?.data) {
+          setTotalPatients(response.data.total);
+          setCurrentPatientIndex(response.data.currentIndex);
+          setPrevPatientId(response.data.prevId);
+          setNextPatientId(response.data.nextId);
+        }
+      })
+      .finally(() => {
         setLoadingPatient(false);
       });
   }, [patientId]);
@@ -51,24 +66,50 @@ export function PatientPage(props: PatientPageProps) {
    * @param newContactedValue
    */
   const markContacted = (newContactedValue: boolean) => {
-    // TODO - implement
-    console.log('TODO - implement');
+    axios
+      .patch(`http://localhost:3333/patients/${patientId}`, {
+        contacted: newContactedValue,
+      })
+      .then((response) => {
+        if (response?.data) {
+          setPatient({ ...patient, ...response.data });
+
+          // Handle case when contacted has changed
+
+          // We can increase/decrease total count
+          setTotalPatients(totalPatients + (newContactedValue ? -1 : 1));
+
+          // or just navigate to the previous/next patient
+          // if (nextPatientId) {
+          //   history.push(`/patient/${nextPatientId}`);
+          // } else if (prevPatientId) {
+          //   history.push(`/patient/${prevPatientId}`);
+          // } else {
+          //   history.push(PatientOverviewUrl);
+          // }
+        }
+      })
+      .finally(() => {
+        setLoadingPatient(false);
+      });
   };
 
   /**
    * Function for going to the previous patient.
    */
   const goToPreviousPatient = () => {
-    // TODO - implement
-    console.log('TODO - implement');
+    if (prevPatientId) {
+      history.push(`/patient/${prevPatientId}`);
+    }
   };
 
   /**
    * Function for going to the next patient.
    */
   const goToNextPatient = () => {
-    // TODO - implement
-    console.log('TODO - implement');
+    if (nextPatientId) {
+      history.push(`/patient/${nextPatientId}`);
+    }
   };
 
   // If loading patient, show loading animation
@@ -105,7 +146,9 @@ export function PatientPage(props: PatientPageProps) {
             icon={<LeftOutlined />}
             onClick={() => history.push(PatientOverviewUrl)}
           />
-          <h1>({currentPatientIndex} / {totalPatients}) Patient: {patient.ssn}</h1>
+          <h1>
+            ({currentPatientIndex} / {totalPatients}) Patient: {patient.ssn}
+          </h1>
         </div>
 
         <div
@@ -121,8 +164,7 @@ export function PatientPage(props: PatientPageProps) {
             type="primary"
             onClick={() => goToPreviousPatient()}
             icon={<LeftOutlined />}
-            // TODO - maybe update the disabled state?
-            disabled={currentPatientIndex === 0}
+            disabled={!prevPatientId}
           />
           <Button
             type="primary"
@@ -134,8 +176,7 @@ export function PatientPage(props: PatientPageProps) {
             type="primary"
             onClick={() => goToNextPatient()}
             icon={<RightOutlined />}
-            // TODO - maybe update the disabled state?
-            disabled={currentPatientIndex === totalPatients - 1}
+            disabled={!nextPatientId}
           />
         </div>
       </div>

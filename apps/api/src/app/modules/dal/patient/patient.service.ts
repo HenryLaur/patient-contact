@@ -1,6 +1,7 @@
 import {
   DetailedPatientDto,
   ListPatientDto,
+  PatientIndexDto,
   UpdatePatientDto,
 } from '@contact-patient/dtos';
 import { Injectable, NotFoundException } from '@nestjs/common';
@@ -44,6 +45,9 @@ export class PatientService {
         'updated',
       ],
       where: { contacted: contacted },
+      order: {
+        id: 'ASC',
+      },
     });
   }
 
@@ -75,10 +79,10 @@ export class PatientService {
     id: string,
     patient: UpdatePatientDto
   ): Promise<DetailedPatientDto> {
-    const existingPatient = await this.repo.findOne(patient.id);
+    const existingPatient = await this.repo.findOne(id);
 
     if (!existingPatient) {
-      throw new NotFoundException(`Patient with id ${patient.id} not found`);
+      throw new NotFoundException(`Patient with id ${id} not found`);
     }
 
     return this.repo.save({
@@ -94,5 +98,43 @@ export class PatientService {
   async hardDeleteAll(): Promise<boolean> {
     await this.repo.createQueryBuilder().delete().where('true').execute();
     return true;
+  }
+
+  /**
+   * Finds the next patient based on the current patient's ID.
+   * Orders by id and returns the next patient in sequence.
+   * @param currentId Current patient's ID
+   * @returns PatientIndexDto the next and previous patient ids, current index and total number of patients
+   */
+  async getPatientIndex(
+    currentId: string,
+    contacted: boolean
+  ): Promise<PatientIndexDto> {
+    const currentPatient = await this.repo.findOne(currentId);
+    if (!currentPatient) {
+      throw new NotFoundException(`Patient with id ${currentId} not found`);
+    }
+
+    const patients = await this.repo.find({
+      where: { contacted: contacted },
+      order: {
+        id: 'ASC',
+      },
+    });
+    // This searching can be a bit slow so it might be a bit faster if we find the indexes and total count in sql
+    const currentIndex = patients.findIndex((p) => p.id === currentId);
+    if (currentIndex === -1) {
+      throw new NotFoundException('Current patient not found');
+    }
+
+    return {
+      total: patients.length,
+      currentIndex: currentIndex + 1,
+      nextId:
+        currentIndex < patients.length - 1
+          ? patients[currentIndex + 1].id
+          : null,
+      prevId: currentIndex > 0 ? patients[currentIndex - 1].id : null,
+    };
   }
 }

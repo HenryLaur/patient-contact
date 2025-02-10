@@ -1,6 +1,7 @@
 import {
   DetailedPatientDto,
   ListPatientDto,
+  PatientIndexDto,
   QueryPatientsDto,
   UpdatePatientDto,
 } from '@contact-patient/dtos';
@@ -43,5 +44,17 @@ export class PatientsController {
     @Body() data: UpdatePatientDto
   ): Promise<DetailedPatientDto> {
     return this.patientService.update(id, data);
+  }
+
+  @ApiOkResponse({
+    description: 'Returns the next, previous patient ids and current patient index with the total amount of patients',
+    type: PatientIndexDto,
+  })
+  @Get(':id/index')
+  async getPatientIndex(
+    @Param('id') id: string,
+    @Query() query: QueryPatientsDto
+  ): Promise<PatientIndexDto> {
+    return this.patientService.getPatientIndex(id, query.contacted);
   }
 }

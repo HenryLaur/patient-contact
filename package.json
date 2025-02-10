@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start-database": "docker compose -f docker-compose/docker-compose.yml up"
+    "start-database": "docker compose -f docker-compose/docker-compose.yml up",
+    "format": "prettier --write ."
   },
   "private": true,
   "devDependencies": {
