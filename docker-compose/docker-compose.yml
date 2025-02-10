@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  cp-mariadb:
+    container_name: cp-mariadb
+    image: mariadb:10.2
+    ports:
+      - '3306:3306'
+    volumes:
+      - type: bind
+        source: ./assets/init-database.sql
+        target: /docker-entrypoint-initdb.d/init-database.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: 'guest1234'
